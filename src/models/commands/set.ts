@@ -1,4 +1,4 @@
-import { loadConfig } from '../../config/load'
+import { loadConfig } from '../../lib/load-load'
 import { setStoredApiKey } from '../keys'
 import { promptForApiKey, promptForProviderSelection } from '../prompts'
 
@@ -6,7 +6,7 @@ export async function setModelKeyCommand(
   providerArgument?: string,
   apiKeyArgument?: string
 ) {
-  const { config } = await loadConfig()
+  const config = await loadConfig()
   const provider =
     providerArgument?.trim() ??
     (await promptForProviderSelection(

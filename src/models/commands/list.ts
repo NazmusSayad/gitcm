@@ -1,8 +1,8 @@
-import { loadConfig } from '../../config/load'
+import { loadConfig } from '../../lib/load-load'
 import { listStoredApiKeys } from '../keys'
 
 export async function listModelsCommand() {
-  const [{ config }, storedKeys] = await Promise.all([
+  const [config, storedKeys] = await Promise.all([
     loadConfig(),
     listStoredApiKeys(),
   ])

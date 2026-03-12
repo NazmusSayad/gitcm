@@ -1,36 +1,34 @@
 import { readFile } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 import { configFileSchema, resolvedConfigSchema } from '../schema'
-import { getConfigPaths } from './paths'
 
 export async function loadConfig(cwd = process.cwd()) {
-  const paths = getConfigPaths(cwd)
-
   const [globalConfig, projectConfig, projectInstructions] = await Promise.all([
-    readConfigFile(paths.globalConfigPath),
-    readConfigFile(paths.projectConfigPath),
-    readInstructionsFile(paths.projectInstructionsPath),
+    readConfigFile(path.join(os.homedir(), '.config', 'gityo.json')),
+    readConfigFile(path.join(cwd, '.gityo.config.json')),
+    readInstructionsFile(path.join(cwd, '.gityo.instructions.md')),
   ])
 
-  return {
-    config: resolvedConfigSchema.parse({
-      models: {
-        ...(globalConfig?.models ?? {}),
-        ...(projectConfig?.models ?? {}),
-      },
-      defaultModel: projectConfig?.defaultModel ?? globalConfig?.defaultModel,
-      autoAcceptCommitMessage:
-        projectConfig?.autoAcceptCommitMessage ??
-        globalConfig?.autoAcceptCommitMessage,
-      postCommand: projectConfig?.postCommand ?? globalConfig?.postCommand,
-      autoRunPostCommand:
-        projectConfig?.autoRunPostCommand ?? globalConfig?.autoRunPostCommand,
-      customInstructions:
-        projectInstructions ??
-        projectConfig?.customInstructions ??
-        globalConfig?.customInstructions,
-    }),
-    paths,
-  }
+  return resolvedConfigSchema.parse({
+    models: {
+      ...(globalConfig?.models ?? {}),
+      ...(projectConfig?.models ?? {}),
+    },
+
+    defaultModel: projectConfig?.defaultModel ?? globalConfig?.defaultModel,
+
+    autoAcceptCommitMessage:
+      projectConfig?.autoAcceptCommitMessage ??
+      globalConfig?.autoAcceptCommitMessage,
+    postCommand: projectConfig?.postCommand ?? globalConfig?.postCommand,
+    autoRunPostCommand:
+      projectConfig?.autoRunPostCommand ?? globalConfig?.autoRunPostCommand,
+    customInstructions:
+      projectInstructions ??
+      projectConfig?.customInstructions ??
+      globalConfig?.customInstructions,
+  })
 }
 
 async function readConfigFile(filePath: string) {

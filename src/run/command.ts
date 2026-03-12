@@ -1,11 +1,11 @@
-import { loadConfig } from '../config/load'
 import {
   commitChanges,
   getRepositoryState,
   getStagedDiff,
   runPostCommand,
   stageFiles,
-} from '../git/repo'
+} from '../lib/git'
+import { loadConfig } from '../lib/load-load'
 import { generateCommitMessage } from '../models/generate'
 import {
   getConfiguredModelOptions,
@@ -15,7 +15,7 @@ import { resolveCommitMessage } from './commit-message'
 import { promptForFilesToStage, promptForPostCommand } from './prompts'
 
 export async function runCommand() {
-  const { config } = await loadConfig()
+  const config = await loadConfig()
   const repositoryState = await getRepositoryState()
 
   if (repositoryState.files.length === 0) {

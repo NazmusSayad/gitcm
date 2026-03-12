@@ -10,7 +10,8 @@
     "test:docker": "pnpm build && docker build --file ./Dockerfile.test --tag gityo-test . && docker run --rm gityo-test",
     "start": "tsx --watch ./src/index.ts",
     "build": "tsdown --config ./tsdown.config.ts",
-    "dev": "concurrently --names \"R,T\" --prefix-colors \"blue.dim,magenta.dim\" \"tsdown --config ./tsdown.config.ts --watch\" \"tsc --noEmit --watch\""
+    "dev": "concurrently --names \"R,T\" --prefix-colors \"blue.dim,magenta.dim\" \"tsdown --config ./tsdown.config.ts --watch\" \"tsc --noEmit --watch\"",
+    "dev:tsc": "tsc --noEmit --watch"
   },
   "bin": {
     "gityo": "./dist/index.mjs"
