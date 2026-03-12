@@ -165,7 +165,4 @@ Dependency rule:
 - Create a Docker-based test environment for reliability checks.
 - Authentication is not required for test environments.
 - Git behavior may be faked or mocked to verify CLI flow safely.
-
-```
-
-```
+- DO NOT RUN ANY TESTS AGAINST A REAL GIT REPO TO AVOID DATA LOSS.
