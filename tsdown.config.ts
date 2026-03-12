@@ -10,7 +10,7 @@ export default defineConfig({
   outDir: './dist',
   tsconfig: './tsconfig.json',
 
-  target: 'ES6',
+  target: 'ES2020',
   minify: 'dce-only',
 
   treeshake: false,
