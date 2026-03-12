@@ -15,20 +15,24 @@ export const modelGroupSchema = z.record(
   z.array(modelEntrySchema)
 )
 
-export const configFileSchema = z.object({
-  models: modelGroupSchema.optional(),
-  defaultModel: z.string().min(1).optional(),
-  autoAcceptCommitMessage: z.boolean().optional(),
-  postCommand: postCommandSchema.optional(),
-  autoRunPostCommand: z.boolean().optional(),
-  customInstructions: z.string().min(1).optional(),
-})
+export const configSchema = z
+  .object({
+    models: modelGroupSchema.default({}),
 
-export const resolvedConfigSchema = z.object({
-  models: modelGroupSchema.default({}),
-  defaultModel: z.string().min(1).optional(),
-  autoAcceptCommitMessage: z.boolean().default(false),
-  postCommand: postCommandSchema.default('push'),
-  autoRunPostCommand: z.boolean().default(false),
-  customInstructions: z.string().min(1).optional(),
-})
+    autoAcceptCommitMessage: z.boolean().default(false),
+    customInstructions: z.string().min(1).optional(),
+
+    postCommand: postCommandSchema.default('push'),
+    autoRunPostCommand: z.boolean().default(false),
+  })
+  .default({
+    models: {},
+
+    autoAcceptCommitMessage: false,
+    customInstructions: undefined,
+
+    postCommand: 'push',
+    autoRunPostCommand: false,
+  })
+
+export type ConfigSchema = z.infer<typeof configSchema>
