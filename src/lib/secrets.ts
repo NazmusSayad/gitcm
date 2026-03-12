@@ -1,53 +1,21 @@
 const SERVICE_NAME = 'gityo'
 
 export async function getStoredApiKey(provider: string) {
-  const keytar = await loadKeytar()
-
+  const keytar = await import('keytar')
   return keytar.getPassword(SERVICE_NAME, provider)
 }
 
 export async function setStoredApiKey(provider: string, apiKey: string) {
-  const keytar = await loadKeytar()
-
+  const keytar = await import('keytar')
   await keytar.setPassword(SERVICE_NAME, provider, apiKey)
 }
 
 export async function listStoredApiKeys() {
-  const keytar = await loadKeytar()
+  const keytar = await import('keytar')
   const credentials = await keytar.findCredentials(SERVICE_NAME)
 
-  return credentials
-    .map((credential) => ({
-      provider: credential.account,
-      apiKey: credential.password,
-    }))
-    .sort((left, right) => left.provider.localeCompare(right.provider))
-}
-
-async function loadKeytar() {
-  try {
-    const keytarModule = await import('keytar')
-
-    if (
-      'findCredentials' in keytarModule &&
-      typeof keytarModule.findCredentials === 'function'
-    ) {
-      return keytarModule
-    }
-
-    if (
-      'default' in keytarModule &&
-      keytarModule.default &&
-      typeof keytarModule.default === 'object' &&
-      'findCredentials' in keytarModule.default
-    ) {
-      return keytarModule.default
-    }
-
-    throw new Error('Unable to load keytar exports.')
-  } catch {
-    throw new Error(
-      'Secure API key storage is unavailable. Reinstall dependencies and ensure keytar can build or download its native binary.'
-    )
-  }
+  return credentials.map((credential) => ({
+    provider: credential.account,
+    apiKey: credential.password,
+  }))
 }
