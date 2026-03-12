@@ -2,6 +2,7 @@ import { checkbox, confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
 import readline from 'node:readline'
 import type { getRepositoryState } from '../git/repo'
+import { AppUserCanceledError } from '../lib/errors'
 import type { getConfiguredModelOptions } from '../models/options'
 
 type RepositoryState = Awaited<ReturnType<typeof getRepositoryState>>
@@ -71,7 +72,7 @@ export async function promptForCommitMessageInput(
       function onKeypress(chunk: string, key: readline.Key) {
         if (key.ctrl && key.name === 'c') {
           cleanup()
-          reject(new Error('Prompt cancelled.'))
+          reject(new AppUserCanceledError())
           return
         }
 
@@ -161,7 +162,7 @@ export async function promptForGeneratedCommitAction(message: string) {
     function onKeypress(chunk: string, key: readline.Key) {
       if (key.ctrl && key.name === 'c') {
         cleanup()
-        reject(new Error('Prompt cancelled.'))
+        reject(new AppUserCanceledError())
         return
       }
 
