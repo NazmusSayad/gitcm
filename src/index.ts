@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-import { startCli } from './cli'
+import { app } from './app'
 
-void startCli(process.argv.slice(2))
+app.start()
