@@ -6,8 +6,10 @@ import { runCommand } from './run/command'
 export const app = NoArg.create('gityo', {
   description:
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.',
-}).on(() => {
-  void runCommand().catch((error: unknown) => {
+}).on(async () => {
+  try {
+    await runCommand()
+  } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
 
     process.stderr.write(
@@ -17,7 +19,7 @@ export const app = NoArg.create('gityo', {
     if (message !== 'Prompt cancelled.') {
       process.exitCode = 1
     }
-  })
+  }
 })
 
 const modelsProgram = app.create('models', {
@@ -32,8 +34,10 @@ modelsProgram
     arguments: [{ name: 'provider', type: NoArg.string() }],
     optionalArguments: [{ name: 'api-key', type: NoArg.string() }],
   })
-  .on(([provider, apiKey]) => {
-    void setModelKeyCommand(provider, apiKey).catch((error: unknown) => {
+  .on(async ([provider, apiKey]) => {
+    try {
+      await setModelKeyCommand(provider, apiKey)
+    } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
 
       process.stderr.write(
@@ -43,15 +47,17 @@ modelsProgram
       if (message !== 'Prompt cancelled.') {
         process.exitCode = 1
       }
-    })
+    }
   })
 
 modelsProgram
   .create('list', {
     description: 'List configured model groups and any stored API keys.',
   })
-  .on(() => {
-    void listModelsCommand().catch((error: unknown) => {
+  .on(async () => {
+    try {
+      await listModelsCommand()
+    } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
 
       process.stderr.write(
@@ -61,5 +67,5 @@ modelsProgram
       if (message !== 'Prompt cancelled.') {
         process.exitCode = 1
       }
-    })
+    }
   })
