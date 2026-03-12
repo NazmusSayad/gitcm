@@ -2,13 +2,11 @@ import { z } from 'zod'
 
 export const postCommandSchema = z.enum(['push', 'push-and-pull'])
 
-export const reasoningSchema = z.union([z.boolean(), z.string().min(1)])
-
 export const modelEntrySchema = z.union([
   z.string().min(1),
   z.object({
     name: z.string().min(1),
-    reasoning: reasoningSchema.optional(),
+    reasoning: z.union([z.boolean(), z.string().min(1)]).optional(),
   }),
 ])
 
