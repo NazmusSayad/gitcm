@@ -1,20 +1,5 @@
-import { loadConfig } from '../config'
-import { getConfiguredProviders } from '../models'
-import { promptForApiKey, promptForProviderSelection } from '../prompts'
-import { listStoredApiKeys, maskApiKey, setStoredApiKey } from '../secrets'
-
-export async function setModelKeyCommand(
-  providerArgument?: string,
-  apiKeyArgument?: string
-) {
-  const { config } = await loadConfig()
-  const provider = await resolveProvider(providerArgument, config)
-  const apiKey = (apiKeyArgument ?? (await promptForApiKey(provider))).trim()
-
-  await setStoredApiKey(provider, apiKey)
-
-  process.stdout.write(`Stored API key for ${provider}.\n`)
-}
+import { loadConfig } from '../../config/load'
+import { listStoredApiKeys } from '../keys'
 
 export async function listModelsCommand() {
   const [{ config }, storedKeys] = await Promise.all([
@@ -53,13 +38,14 @@ export async function listModelsCommand() {
   }
 }
 
-async function resolveProvider(
-  providerArgument: string | undefined,
-  config: Awaited<ReturnType<typeof loadConfig>>['config']
-) {
-  if (providerArgument) {
-    return providerArgument.trim()
+function maskApiKey(apiKey: string | null | undefined) {
+  if (!apiKey) {
+    return '(not set)'
   }
 
-  return promptForProviderSelection(getConfiguredProviders(config))
+  if (apiKey.length <= 8) {
+    return `${apiKey.slice(0, 2)}***`
+  }
+
+  return `${apiKey.slice(0, 4)}***${apiKey.slice(-4)}`
 }

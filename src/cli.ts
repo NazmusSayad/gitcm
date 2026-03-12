@@ -1,6 +1,7 @@
 import { NoArg } from 'noarg'
-import { listModelsCommand, setModelKeyCommand } from './commands/models'
-import { runCommand } from './commands/run'
+import { listModelsCommand } from './models/commands/list'
+import { setModelKeyCommand } from './models/commands/set'
+import { runCommand } from './run/command'
 
 export async function startCli(args: string[]) {
   const app = NoArg.create('gityo', {

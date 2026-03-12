@@ -24,18 +24,6 @@ export async function listStoredApiKeys() {
     .sort((left, right) => left.provider.localeCompare(right.provider))
 }
 
-export function maskApiKey(apiKey: string | null | undefined) {
-  if (!apiKey) {
-    return '(not set)'
-  }
-
-  if (apiKey.length <= 8) {
-    return `${apiKey.slice(0, 2)}***`
-  }
-
-  return `${apiKey.slice(0, 4)}***${apiKey.slice(-4)}`
-}
-
 async function loadKeytar() {
   try {
     const keytarModule = await import('keytar')

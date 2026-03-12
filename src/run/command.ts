@@ -1,19 +1,18 @@
-import { resolveCommitMessage } from '../commit-message'
-import { loadConfig } from '../config'
+import { loadConfig } from '../config/load'
 import {
   commitChanges,
-  getPostCommandLabel,
   getRepositoryState,
   getStagedDiff,
   runPostCommand,
   stageFiles,
-} from '../git'
+} from '../git/repo'
+import { generateCommitMessage } from '../models/generate'
 import {
-  generateCommitMessage,
   getConfiguredModelOptions,
   getDefaultModelOption,
-} from '../models'
-import { promptForFilesToStage, promptForPostCommand } from '../prompts'
+} from '../models/options'
+import { resolveCommitMessage } from './commit-message'
+import { promptForFilesToStage, promptForPostCommand } from './prompts'
 
 export async function runCommand() {
   const { config } = await loadConfig()
@@ -29,10 +28,10 @@ export async function runCommand() {
     selectedFiles.length > 0 ? selectedFiles : repositoryState.files
 
   await stageFiles(filesToStage)
+
   const modelOptions = getConfiguredModelOptions(config)
   const defaultModel = getDefaultModelOption(modelOptions, config.defaultModel)
   const stagedDiff = await getStagedDiff()
-
   const commitMessage = await resolveCommitMessage({
     autoAcceptCommitMessage: config.autoAcceptCommitMessage,
     customInstructions: config.customInstructions,
@@ -51,7 +50,11 @@ export async function runCommand() {
 
   const shouldRunPostCommand =
     config.autoRunPostCommand ||
-    (await promptForPostCommand(getPostCommandLabel(config.postCommand)))
+    (await promptForPostCommand(
+      config.postCommand === 'push'
+        ? 'git push'
+        : 'git push && git pull --rebase'
+    ))
 
   if (!shouldRunPostCommand) {
     return
