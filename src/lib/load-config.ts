@@ -1,7 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { configFileSchema, resolvedConfigSchema } from '../schema'
+import { configSchema } from '../schema'
+
+const configFileSchema = configSchema.unwrap().partial()
 
 export async function loadConfig(cwd = process.cwd()) {
   const [globalConfig, projectConfig, projectInstructions] = await Promise.all([
@@ -10,13 +12,11 @@ export async function loadConfig(cwd = process.cwd()) {
     readInstructionsFile(path.join(cwd, '.gityo.instructions.md')),
   ])
 
-  return resolvedConfigSchema.parse({
+  return configSchema.parse({
     models: {
       ...(globalConfig?.models ?? {}),
       ...(projectConfig?.models ?? {}),
     },
-
-    defaultModel: projectConfig?.defaultModel ?? globalConfig?.defaultModel,
 
     autoAcceptCommitMessage:
       projectConfig?.autoAcceptCommitMessage ??

@@ -2,7 +2,12 @@ import { checkbox, confirm, input, password, select } from '@inquirer/prompts'
 import chalk from 'chalk'
 import readline from 'node:readline'
 import { AppUserCanceledError } from './errors'
-import type { SelectedModel } from './models'
+
+type SelectedModel = {
+  provider: string
+  name: string
+  reasoning?: boolean | string
+}
 
 export async function promptForFilesToStage(branch: string, files: string[]) {
   console.log(`${chalk.bold('branch:')} ${branch}\n`)
@@ -19,19 +24,12 @@ export async function promptForFilesToStage(branch: string, files: string[]) {
 
 export async function promptForCommitMessageInput(
   modelOptions: SelectedModel[],
-  defaultModel?: SelectedModel
+  defaultModelIndex = 0
 ) {
-  const initialIndex = defaultModel
-    ? Math.max(
-        modelOptions.findIndex(
-          (model) =>
-            model.provider === defaultModel.provider &&
-            model.name === defaultModel.name &&
-            model.reasoning === defaultModel.reasoning
-        ),
-        0
-      )
-    : 0
+  const initialIndex =
+    defaultModelIndex >= 0 && defaultModelIndex < modelOptions.length
+      ? defaultModelIndex
+      : 0
 
   if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') {
     const message = await input({
@@ -40,11 +38,11 @@ export async function promptForCommitMessageInput(
 
     return {
       message: message.trim(),
-      selectedModel: modelOptions[initialIndex],
+      selectedModelIndex: modelOptions[initialIndex] ? initialIndex : undefined,
     }
   }
 
-  return new Promise<{ message: string; selectedModel?: SelectedModel }>(
+  return new Promise<{ message: string; selectedModelIndex?: number }>(
     (resolve, reject) => {
       const stdin = process.stdin
       let currentValue = ''
@@ -81,7 +79,9 @@ export async function promptForCommitMessageInput(
           cleanup()
           resolve({
             message: currentValue.trim(),
-            selectedModel: modelOptions[activeIndex],
+            selectedModelIndex: modelOptions[activeIndex]
+              ? activeIndex
+              : undefined,
           })
           return
         }

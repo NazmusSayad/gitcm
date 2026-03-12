@@ -21,27 +21,23 @@ export async function listModelsController() {
 
   for (const provider of providers) {
     const models = config.models[provider] ?? []
+
     const storedKey = storedKeys.find(
       (entry) => entry.provider === provider
     )?.apiKey
+
+    const maskedKey = !storedKey
+      ? '(not set)'
+      : storedKey.length <= 8
+        ? `${storedKey.slice(0, 2)}***`
+        : `${storedKey.slice(0, 4)}***${storedKey.slice(-4)}`
+
     const modelNames = models.map((entry) =>
       typeof entry === 'string' ? entry : entry.name
     )
 
     console.log(
-      `${provider}\n  key: ${maskApiKey(storedKey)}\n  models: ${modelNames.length > 0 ? modelNames.join(', ') : '(none configured)'}\n`
+      `${provider}\n  key: ${maskedKey}\n  models: ${modelNames.length > 0 ? modelNames.join(', ') : '(none configured)'}\n`
     )
   }
-}
-
-function maskApiKey(apiKey: string | null | undefined) {
-  if (!apiKey) {
-    return '(not set)'
-  }
-
-  if (apiKey.length <= 8) {
-    return `${apiKey.slice(0, 2)}***`
-  }
-
-  return `${apiKey.slice(0, 4)}***${apiKey.slice(-4)}`
 }
