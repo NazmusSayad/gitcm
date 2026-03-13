@@ -45,7 +45,7 @@ export async function promptForCommitMessageInput(
 
   if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') {
     const message = await input({
-      message: `Commit message (enter = use typed message, empty = generate${modelOptions[initialIndex] ? ` | model: ${modelOptions[initialIndex].provider}:${modelOptions[initialIndex].name}` : ''})`,
+      message: `${chalk.blue('󰜘 Commit message')} ${chalk.gray('(empty = generate)')}${modelOptions[initialIndex] ? ` ${chalk.gray(`| model: ${modelOptions[initialIndex].provider}:${modelOptions[initialIndex].name}`)}` : ''}`,
     })
 
     return {
@@ -59,24 +59,53 @@ export async function promptForCommitMessageInput(
       const stdin = process.stdin
       let currentValue = ''
       let activeIndex = initialIndex
+      let renderedLineCount = 0
 
       readline.emitKeypressEvents(stdin)
       stdin.setRawMode(true)
       stdin.resume()
 
-      function render() {
-        readline.clearLine(process.stdout, 0)
+      function clearRenderedBlock() {
+        if (renderedLineCount === 0) {
+          return
+        }
+
         readline.cursorTo(process.stdout, 0)
-        process.stdout.write(
-          `Commit message (enter = use typed message, empty = generate${modelOptions[activeIndex] ? ` | model: ${modelOptions[activeIndex].provider}:${modelOptions[activeIndex].name}` : ''}) ${currentValue}`
+
+        for (let lineIndex = 0; lineIndex < renderedLineCount; lineIndex += 1) {
+          readline.clearLine(process.stdout, 0)
+
+          if (lineIndex < renderedLineCount - 1) {
+            readline.moveCursor(process.stdout, 0, -1)
+          }
+        }
+
+        readline.cursorTo(process.stdout, 0)
+        renderedLineCount = 0
+      }
+
+      function render() {
+        clearRenderedBlock()
+
+        const selectedModel = modelOptions[activeIndex]
+          ? `${modelOptions[activeIndex].provider}:${modelOptions[activeIndex].name}`
+          : 'none'
+        const header = chalk.blue('󰜘 Commit message')
+        const help = chalk.gray(
+          'Enter=submit • Shift+Enter/Ctrl+Enter=new line • Tab switch model • empty=generate'
         )
+        const modelLine = `${chalk.cyan('󰒲 Model')} ${chalk.white(selectedModel)}`
+        const value = currentValue.length > 0 ? currentValue : chalk.gray('')
+        const ui = `${header}\n${help}\n${modelLine}\n\n${value}`
+
+        process.stdout.write(ui)
+        renderedLineCount = ui.split('\n').length
       }
 
       function cleanup() {
         stdin.off('keypress', onKeypress)
         stdin.setRawMode(false)
-        readline.clearLine(process.stdout, 0)
-        readline.cursorTo(process.stdout, 0)
+        clearRenderedBlock()
         process.stdout.write('\n')
       }
 
@@ -84,6 +113,24 @@ export async function promptForCommitMessageInput(
         if (key.ctrl && key.name === 'c') {
           cleanup()
           reject(new AppUserCanceledError())
+          return
+        }
+
+        const modifiedEnterSequences = new Set([
+          '\u001b[13;2u',
+          '\u001b[13;5u',
+          '\u001b[27;2;13~',
+          '\u001b[27;5;13~',
+        ])
+
+        if (
+          key.name === 'linefeed' ||
+          (key.ctrl && key.name === 'j') ||
+          (key.meta && (key.name === 'return' || key.name === 'enter')) ||
+          modifiedEnterSequences.has(chunk)
+        ) {
+          currentValue += '\n'
+          render()
           return
         }
 

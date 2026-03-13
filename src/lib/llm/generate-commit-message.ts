@@ -49,7 +49,7 @@ export async function generateCommitMessage(
     providerOptions: {
       openai: {
         reasoningEffort:
-          model.reasoning === true ? 'medium' : model.reasoning || 'none',
+          model.reasoning === true ? 'medium' : model.reasoning || undefined,
       } satisfies OpenAICompatibleProviderOptions,
     },
   })
