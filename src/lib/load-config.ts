@@ -10,7 +10,7 @@ export async function loadConfig(cwd = process.cwd()) {
   const [globalConfig, projectConfig, projectInstructions] = await Promise.all([
     readGlobalConfig(),
     readProjectConfig(cwd),
-    readInstructionsFile(path.join(cwd, '.gityo.instructions.md')),
+    readInstructionsFile(path.join(cwd, '.gityo.md')),
   ])
 
   return resolveConfig({
