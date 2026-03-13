@@ -21,7 +21,7 @@ export const configSchema = z
     autoAcceptMessage: z.boolean(),
     instructions: z.string().min(1),
 
-    postCommand: z.enum(['push', 'push-and-pull']),
+    postCommand: z.enum(['push', 'push-and-pull']).nullable(),
     autoRunPostCommand: z.boolean(),
   })
   .partial()
@@ -35,7 +35,9 @@ export function resolveConfig(input: unknown) {
     instructions: parsed.instructions,
     autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,
 
-    postCommand: parsed.postCommand,
+    postCommand:
+      parsed.postCommand === undefined ? ('push' as const) : parsed.postCommand,
+
     autoRunPostCommand: parsed.autoRunPostCommand ?? false,
   }
 }
