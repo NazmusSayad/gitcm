@@ -42,34 +42,31 @@ export async function mainController() {
 
   await stageFiles(filesToStage, repoRoot)
 
-  let finalCommitMessage = await promptForCommitMessageInput(config.model)
+  const apiKey = config.model
+    ? await getStoredApiKey(config.model.provider)
+    : null
+
+  let finalCommitMessage = await promptForCommitMessageInput(
+    config.model && apiKey
+      ? { name: config.model.name, hasKey: true }
+      : config.model
+        ? { name: config.model.name, hasKey: false }
+        : undefined
+  )
 
   if (finalCommitMessage.length === 0) {
-    const model = config.model!
-    if (!model) {
+    if (!config.model || !apiKey) {
       throw new Error(
-        [
-          'No model is configured.',
-          'Add one with: gityo config set model <provider> <model-name> <api-key>',
-          'Or run: gityo config set model',
-        ].join('\n')
-      )
-    }
-
-    const apiKey = await getStoredApiKey(model.provider)
-    if (!apiKey) {
-      throw new Error(
-        [
-          `No API key found for provider "${model.provider}".`,
-          `Set it with: gityo config set model ${model.provider} ${model.name} <api-key>`,
-          'Or run: gityo config set model',
-        ].join('\n')
+        'No commit message provided and no model configured for generation.'
       )
     }
 
     while (true) {
       const llmResult = await runWithLoading('Generating commit message', () =>
-        generateCommitMessage(repoRoot, config, { ...model, key: apiKey })
+        generateCommitMessage(repoRoot, config, {
+          ...config.model!,
+          key: apiKey,
+        })
       )
 
       finalCommitMessage = llmResult.text.trim()

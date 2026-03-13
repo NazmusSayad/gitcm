@@ -59,11 +59,13 @@ export async function promptForFilesToStage(files: string[]) {
 }
 
 export async function promptForCommitMessageInput(model?: {
-  provider: string
+  hasKey: boolean
   name: string
 }) {
   const message = await input({
-    message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.provider}:${model.name}` : ''})`)}`,
+    required: !model?.hasKey,
+    message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.name}` : ''})`)}`,
+
     transformer: (value) =>
       value.length === 0 ? '' : chalk.magenta.dim(`\n${value}`),
     theme: {
