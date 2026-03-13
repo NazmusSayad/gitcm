@@ -18,7 +18,8 @@
     "gityo": "./dist/index.js"
   },
   "dependencies": {
-    "keytar": "^7.9.0"
+    "keytar": "^7.9.0",
+    "pretty-ms": "^9.3.0"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "^3.0.58",

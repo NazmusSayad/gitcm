@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import prettyMilliseconds from 'pretty-ms'
 import {
   commitChanges,
   ensureInsideGitRepo,
@@ -62,6 +63,7 @@ export async function mainController() {
 
   if (finalCommitMessage.length === 0) {
     while (true) {
+      const startedAt = Date.now()
       finalCommitMessage = (
         await runWithLoading('Generating commit message', () =>
           generateCommitMessage(repoRoot, config, selectedModel)
@@ -73,8 +75,16 @@ export async function mainController() {
       }
 
       console.log(
-        `${chalk.magenta('󰚩 Generated message')}\n${chalk.white(finalCommitMessage)}`
+        chalk.magenta('󰚩 Generated message'),
+        chalk.gray(
+          `(${prettyMilliseconds(Date.now() - startedAt, {
+            secondsDecimalDigits: 1,
+            millisecondsDecimalDigits: 0,
+          })})`
+        )
       )
+
+      console.log(chalk.white(finalCommitMessage))
 
       if (config.autoAcceptCommitMessage) {
         break
