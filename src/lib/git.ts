@@ -12,6 +12,21 @@ export async function ensureInsideGitRepo(cwd = process.cwd()) {
   }
 }
 
+export async function getRepositoryRoot(cwd = process.cwd()) {
+  const result = await execa('git', ['rev-parse', '--show-toplevel'], {
+    cwd,
+    reject: false,
+  })
+
+  if (result.exitCode !== 0) {
+    throw new Error(
+      result.stderr.trim() || 'Failed to resolve git repository root.'
+    )
+  }
+
+  return result.stdout.trim()
+}
+
 export async function getCurrentBranch(cwd = process.cwd()) {
   const result = await execa(
     'git',

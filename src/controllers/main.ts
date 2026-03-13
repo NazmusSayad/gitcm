@@ -4,6 +4,7 @@ import {
   ensureInsideGitRepo,
   getChangedFiles,
   getCurrentBranch,
+  getRepositoryRoot,
   runPostCommand,
   stageFiles,
 } from '../lib/git'
@@ -29,24 +30,25 @@ type SelectedModel = {
 
 export async function mainController() {
   const cwd = process.cwd()
-  const config = await loadConfig(cwd)
   await ensureInsideGitRepo(cwd)
-  const branch = await getCurrentBranch(cwd)
-  const files = await getChangedFiles(cwd)
+  const repoRoot = await getRepositoryRoot(cwd)
+  const config = await loadConfig(repoRoot)
+  const branch = await getCurrentBranch(repoRoot)
+  const files = await getChangedFiles(repoRoot)
 
   if (files.length === 0) {
     console.log('No changed files found.')
     return
   }
 
-  console.log(`${chalk.cyan(' Branch')} ${chalk.white(branch)}\n`)
+  console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}\n`)
 
   const selectedFiles = await promptForFilesToStage(files)
   const filesToStage = selectedFiles.length > 0 ? selectedFiles : files
   console.log(filesToStage.join('\n'))
   console.log('')
 
-  await stageFiles(filesToStage, cwd)
+  await stageFiles(filesToStage, repoRoot)
 
   const selectedModel: SelectedModel = config.model
     ? {
@@ -62,7 +64,7 @@ export async function mainController() {
     while (true) {
       finalCommitMessage = (
         await runWithLoading('Generating commit message', () =>
-          generateCommitMessage(cwd, config, selectedModel)
+          generateCommitMessage(repoRoot, config, selectedModel)
         )
       ).text
 
@@ -91,8 +93,7 @@ export async function mainController() {
     }
   }
 
-  console.log('')
-  await commitChanges(finalCommitMessage, cwd)
+  await commitChanges(finalCommitMessage, repoRoot)
   console.log('')
 
   const shouldRunPostCommand =
@@ -107,7 +108,7 @@ export async function mainController() {
     return
   }
 
-  await runPostCommand(config.postCommand, cwd)
+  await runPostCommand(config.postCommand, repoRoot)
 }
 
 async function promptForModelConfig(): Promise<SelectedModel> {
