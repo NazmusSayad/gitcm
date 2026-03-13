@@ -9,15 +9,15 @@ export const app = NoArg.create('gityo', {
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.',
 })
 
-const modelsProgram = app.create('models', {
-  description: 'Manage configured models and stored API keys.',
+const modelProgram = app.create('model', {
+  description: 'Manage configured model provider and stored API keys.',
 })
 
-const modelsListProgram = modelsProgram.create('list', {
-  description: 'List configured model groups and any stored API keys.',
+const modelsListProgram = modelProgram.create('list', {
+  description: 'Show configured model and any stored API keys.',
 })
 
-const modelsSetProgram = modelsProgram.create('set', {
+const modelsSetProgram = modelProgram.create('set', {
   description:
     'Set or update a stored API key for a provider or custom base URL.',
 

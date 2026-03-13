@@ -1,7 +1,6 @@
 import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible'
 import { generateText } from 'ai'
-import { z } from 'zod'
-import { configSchema } from '../../schema'
+import type { ResolvedConfig } from '../../schema'
 import { getStagedDiff } from '../git'
 import { promptForApiKey } from '../prompts'
 import { getStoredApiKey, setStoredApiKey } from '../secrets'
@@ -9,7 +8,7 @@ import { resolveLLM } from './resolve-llm'
 
 export async function generateCommitMessage(
   cwd: string,
-  config: z.infer<typeof configSchema>,
+  config: ResolvedConfig,
   model: {
     provider: string
     name: string

@@ -9,15 +9,15 @@ import {
 import { generateCommitMessage } from '../lib/llm/generate-commit-message'
 import { loadConfig } from '../lib/load-config'
 import {
-  getLastUsedModel,
-  setLastUsedModel,
-} from '../lib/model-selection-state'
-import {
+  promptForApiKey,
   promptForCommitMessageInput,
   promptForFilesToStage,
   promptForGeneratedCommitAction,
+  promptForModelName,
   promptForPostCommand,
+  promptForProviderSelection,
 } from '../lib/prompts'
+import { setStoredApiKey } from '../lib/secrets'
 
 type SelectedModel = {
   provider: string
@@ -42,53 +42,19 @@ export async function mainController() {
 
   await stageFiles(filesToStage, cwd)
 
-  const modelOptions: SelectedModel[] = []
+  const selectedModel: SelectedModel = config.model
+    ? {
+        provider: config.model.provider,
+        name: config.model.name,
+        reasoning: config.model.reasoning,
+      }
+    : await promptForModelConfig()
 
-  for (const [provider, entries] of Object.entries(config.models)) {
-    for (const entry of entries) {
-      modelOptions.push({
-        provider,
-        name: typeof entry === 'string' ? entry : entry.name,
-        reasoning: typeof entry === 'string' ? undefined : entry.reasoning,
-      })
-    }
-  }
-
-  const lastUsedModel = await getLastUsedModel()
-  const defaultModelIndex =
-    lastUsedModel === undefined
-      ? 0
-      : Math.max(
-          modelOptions.findIndex(
-            (option) =>
-              option.provider === lastUsedModel.provider &&
-              option.name === lastUsedModel.name
-          ),
-          0
-        )
-
-  const commitMessageInput = await promptForCommitMessageInput(
-    modelOptions,
-    defaultModelIndex
-  )
-
-  const selectedModel =
-    modelOptions[commitMessageInput.selectedModelIndex ?? defaultModelIndex]
-
-  if (selectedModel) {
-    await setLastUsedModel({
-      provider: selectedModel.provider,
-      name: selectedModel.name,
-    })
-  }
+  const commitMessageInput = await promptForCommitMessageInput(selectedModel)
 
   let commitMessage = commitMessageInput.message
 
   if (commitMessage.length === 0) {
-    if (!selectedModel) {
-      throw new Error('No models are configured for commit message generation.')
-    }
-
     while (true) {
       commitMessage = (await generateCommitMessage(cwd, config, selectedModel))
         .text
@@ -129,4 +95,25 @@ export async function mainController() {
   }
 
   await runPostCommand(config.postCommand, cwd)
+}
+
+async function promptForModelConfig(): Promise<SelectedModel> {
+  console.log('No model configured. Enter model details for this run.')
+
+  const provider = await promptForProviderSelection([
+    'anthropic',
+    'google',
+    'openai',
+    'openrouter',
+  ])
+  const name = await promptForModelName()
+  const apiKey = await promptForApiKey(provider)
+
+  await setStoredApiKey(provider, apiKey.trim())
+
+  return {
+    provider,
+    name: name.trim(),
+    reasoning: false,
+  }
 }

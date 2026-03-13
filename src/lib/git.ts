@@ -1,6 +1,5 @@
 import { execa } from 'execa'
-import type { z } from 'zod'
-import { postCommandSchema } from '../schema'
+import type { ResolvedConfig } from '../schema'
 
 export async function ensureInsideGitRepo(cwd = process.cwd()) {
   const result = await execa('git', ['rev-parse', '--is-inside-work-tree'], {
@@ -73,7 +72,7 @@ export async function commitChanges(message: string, cwd = process.cwd()) {
 }
 
 export async function runPostCommand(
-  postCommand: z.infer<typeof postCommandSchema>,
+  postCommand: ResolvedConfig['postCommand'],
   cwd = process.cwd()
 ) {
   await execa('git', ['push'], {

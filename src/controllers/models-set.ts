@@ -16,7 +16,7 @@ export async function setModelsController(
           'google',
           'openai',
           'openrouter',
-          ...Object.keys(config.models),
+          ...(config.model ? [config.model.provider] : []),
         ])
       )
     ))
