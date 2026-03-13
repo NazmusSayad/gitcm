@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "model": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "openai"
+            },
+            {
+              "type": "string",
+              "const": "anthropic"
+            },
+            {
+              "type": "string",
+              "const": "google"
+            },
+            {
+              "type": "string",
+              "const": "openrouter"
+            },
+            {
+              "type": "string",
+              "const": "kilo"
+            },
+            {
+              "type": "string",
+              "format": "uri"
+            }
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning": {
+          "default": false,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            }
+          ]
+        }
+      },
+      "required": [
+        "provider",
+        "name",
+        "reasoning"
+      ],
+      "additionalProperties": false
+    },
+    "autoAcceptMessage": {
+      "type": "boolean"
+    },
+    "instructions": {
+      "type": "string",
+      "minLength": 1
+    },
+    "postCommand": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "push",
+            "push-and-pull"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "autoRunPostCommand": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}
