@@ -1,7 +1,9 @@
 import { NoArg } from 'noarg'
+import { showConfigController } from './controllers/config'
+import { setConfigController } from './controllers/config-set'
+import { setConfigModelController } from './controllers/config-set-model'
 import { mainController } from './controllers/main'
-import { listModelsController } from './controllers/models-list'
-import { setModelsController } from './controllers/models-set'
+import { resolveScope } from './helpers/resolve-scope'
 import { handleError } from './lib/handle-error'
 
 export const app = NoArg.create('gityo', {
@@ -9,30 +11,54 @@ export const app = NoArg.create('gityo', {
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.',
 })
 
-const modelProgram = app.create('model', {
-  description: 'Manage configured model provider and stored API keys.',
+const configProgram = app.create('config', {
+  description: 'View and update gityo configuration.',
 })
 
-const modelsListProgram = modelProgram.create('list', {
-  description: 'Show configured model and any stored API keys.',
-})
-
-const modelsSetProgram = modelProgram.create('set', {
+const configSetProgram = configProgram.create('set', {
   description:
-    'Set or update a stored API key for a provider or custom base URL.',
+    'Set a config value, or set model with provider, name, and API key.',
+  optionalArguments: [
+    { name: 'key', type: NoArg.string() },
+    { name: 'value', type: NoArg.string() },
+  ],
 
-  arguments: [{ name: 'provider', type: NoArg.string() }],
-  optionalArguments: [{ name: 'api-key', type: NoArg.string() }],
+  globalFlags: {
+    local: NoArg.boolean().default(false).aliases('l'),
+    global: NoArg.boolean().default(true).aliases('g'),
+  },
+})
+
+const configSetModelProgram = configSetProgram.create('model', {
+  description: 'Set the model provider, name, and API key.',
+  optionalArguments: [
+    { name: 'provider', type: NoArg.string() },
+    { name: 'name', type: NoArg.string() },
+    { name: 'apiKey', type: NoArg.string() },
+  ],
 })
 
 app.on(() => {
   handleError(mainController)
 })
 
-modelsListProgram.on(() => {
-  handleError(listModelsController)
+configProgram.on(() => {
+  handleError(showConfigController)
 })
 
-modelsSetProgram.on(([provider, apiKey]) => {
-  handleError(() => setModelsController(provider, apiKey))
+configSetProgram.on(([key, value], options) => {
+  handleError(() =>
+    setConfigController(resolveScope(options.global, options.local), key, value)
+  )
+})
+
+configSetModelProgram.on(([provider, name, apiKey], options) => {
+  handleError(() =>
+    setConfigModelController(
+      resolveScope(options.global, options.local),
+      provider,
+      name,
+      apiKey
+    )
+  )
 })
