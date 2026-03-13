@@ -80,8 +80,6 @@ export async function mainController() {
       console.log(chalk.magenta.dim(finalCommitMessage))
 
       if (config.autoAcceptCommitMessage) {
-        console.log('')
-        console.log(chalk.yellow.dim(' Committing staged changes'))
         break
       }
 
@@ -95,6 +93,9 @@ export async function mainController() {
   if (finalCommitMessage.length === 0) {
     throw new Error('Commit message cannot be empty.')
   }
+
+  console.log('')
+  console.log(chalk.yellow.dim(' Committing staged changes'))
 
   await commitChanges(finalCommitMessage, repoRoot)
   console.log('')
