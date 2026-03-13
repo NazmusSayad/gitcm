@@ -11,7 +11,8 @@
     "start": "tsx --watch ./src/index.ts",
     "build": "tsdown --config ./tsdown.config.ts",
     "dev": "concurrently --names \"R,T\" --prefix-colors \"blue.dim,magenta.dim\" \"tsdown --config ./tsdown.config.ts --watch\" \"tsc --noEmit --watch\"",
-    "dev:tsc": "tsc --noEmit --watch"
+    "dev:tsc": "tsc --noEmit --watch",
+    "json": "tsx ./src/json.ts"
   },
   "bin": {
     "gityo": "./dist/index.js"

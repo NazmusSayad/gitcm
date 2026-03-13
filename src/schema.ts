@@ -17,6 +17,8 @@ export const modelGroupSchema = z.record(
 
 export const configSchema = z
   .object({
+    $schema: z.url().optional(),
+
     models: modelGroupSchema.default({}),
 
     autoAcceptCommitMessage: z.boolean().default(false),
