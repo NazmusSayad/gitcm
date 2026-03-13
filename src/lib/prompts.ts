@@ -64,7 +64,13 @@ export async function promptForCommitMessageInput(model?: {
 }) {
   const message = await input({
     message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.provider}:${model.name}` : ''})`)}`,
-    theme: selectionTheme,
+    theme: {
+      ...selectionTheme,
+      style: {
+        ...selectionTheme.style,
+        answer: (input: string) => chalk.magenta.dim(input),
+      },
+    },
   })
 
   return message.trim()
