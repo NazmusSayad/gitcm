@@ -88,7 +88,8 @@ export async function mainController() {
       console.log(chalk.white(finalCommitMessage))
 
       if (config.autoAcceptCommitMessage) {
-        console.log(chalk.green(` Accepted generated commit message`))
+        console.log('')
+        console.log(chalk.green(` Committing with generated message`))
         break
       }
 
@@ -107,7 +108,7 @@ export async function mainController() {
   console.log('')
 
   if (config.autoRunPostCommand) {
-    console.log(chalk.green(` Accepted post command: ${config.postCommand}`))
+    console.log(chalk.green(` Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
     if (!shouldRunPostCommand) {
