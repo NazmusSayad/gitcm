@@ -62,8 +62,8 @@ const configSetModelProgram = configSetProgram.create('model', {
   ],
 })
 
-app.on(() => {
-  handleError(mainController)
+app.on((_, options) => {
+  handleError(() => mainController(options))
 })
 
 configProgram.on(() => {
