@@ -18,6 +18,7 @@ import {
   promptForPostCommand,
 } from '../lib/prompts'
 import { runWithLoading } from '../lib/run-with-loading'
+import { getStoredApiKey } from '../lib/secrets'
 
 export async function mainController() {
   const cwd = process.cwd()
@@ -45,22 +46,41 @@ export async function mainController() {
   let finalCommitMessage = await promptForCommitMessageInput(config.model)
 
   if (finalCommitMessage.length === 0) {
-    // Check the selected model, not none is there or api key not here throw error, and explain the user how we can add models
+    const model = config.model!
+    if (!model) {
+      throw new Error(
+        [
+          'No model is configured.',
+          'Add one with: gityo config set model <provider> <model-name> <api-key>',
+          'Or run: gityo config set model',
+        ].join('\n')
+      )
+    }
+
+    const apiKey = await getStoredApiKey(model.provider)
+    if (!apiKey) {
+      throw new Error(
+        [
+          `No API key found for provider "${model.provider}".`,
+          `Set it with: gityo config set model ${model.provider} ${model.name} <api-key>`,
+          'Or run: gityo config set model',
+        ].join('\n')
+      )
+    }
 
     while (true) {
       const startedAt = Date.now()
-      finalCommitMessage = (
-        await runWithLoading('Generating commit message', () =>
-          generateCommitMessage(repoRoot, config, selectedModel)
-        )
-      ).text
+      const llmResult = await runWithLoading('Generating commit message', () =>
+        generateCommitMessage(repoRoot, config, { ...model, key: apiKey })
+      )
 
+      finalCommitMessage = llmResult.text.trim()
       if (finalCommitMessage.length === 0) {
         throw new Error('The selected model returned an empty commit message.')
       }
 
       console.log(
-        chalk.magenta('󰚩 Generated message'),
+        chalk.magenta('󱙺 Generated message'),
         chalk.reset.dim(
           `(${prettyMilliseconds(Date.now() - startedAt, {
             secondsDecimalDigits: 1,

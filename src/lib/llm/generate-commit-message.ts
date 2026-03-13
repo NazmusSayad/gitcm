@@ -2,8 +2,6 @@ import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible'
 import { generateText } from 'ai'
 import type { ResolvedConfig } from '../../schema'
 import { getStagedDiff } from '../git'
-import { promptForApiKey } from '../prompts'
-import { getStoredApiKey, setStoredApiKey } from '../secrets'
 import { resolveLLM } from './resolve-llm'
 
 export async function generateCommitMessage(
@@ -12,6 +10,8 @@ export async function generateCommitMessage(
   model: {
     provider: string
     name: string
+    key: string
+
     reasoning?: boolean | string
   }
 ) {
@@ -29,18 +29,11 @@ export async function generateCommitMessage(
   sections.push(`Staged diff:\n${stagedDiff}`)
   const prompt = sections.join('\n\n')
 
-  let apiKey = await getStoredApiKey(model.provider)
-
-  if (!apiKey) {
-    apiKey = (await promptForApiKey(model.provider)).trim()
-    await setStoredApiKey(model.provider, apiKey)
-  }
-
   const result = await generateText({
     model: resolveLLM({
       provider: model.provider,
       model: model.name,
-      apiKey,
+      apiKey: model.key,
     }),
 
     prompt,
