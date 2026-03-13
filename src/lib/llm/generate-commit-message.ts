@@ -3,9 +3,7 @@ import { generateText } from 'ai'
 import type { ResolvedConfig } from '../../schema'
 import { getStagedDiff } from '../git'
 import { resolveAiProvider } from './resolve-provider'
-
-import promptTxt from './test.txt?raw'
-console.log(promptTxt)
+import systemPrompt from './system-prompt.txt?raw'
 
 export async function generateCommitMessage(
   cwd: string,
@@ -18,20 +16,6 @@ export async function generateCommitMessage(
     reasoning?: boolean | string
   }
 ) {
-  const stagedDiff = await getStagedDiff(cwd)
-  const sections = [
-    'Write a concise git commit message for the staged changes.',
-    'Focus on why the changes were made, not a file-by-file summary.',
-    'Return only the commit message text with no quotes or code fences.',
-  ]
-
-  if (config.customInstructions) {
-    sections.push(`Project instructions:\n${config.customInstructions}`)
-  }
-
-  sections.push(`Staged diff:\n${stagedDiff}`)
-  const prompt = sections.join('\n\n')
-
   const provider = resolveAiProvider(model.provider, model.key)
   if (!provider) {
     throw new Error(
@@ -42,7 +26,22 @@ export async function generateCommitMessage(
   const result = await generateText({
     model: provider(model.name),
 
-    prompt,
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt,
+      },
+      {
+        role: 'user',
+        content: `Staged diff:\n${await getStagedDiff(cwd)}`,
+      },
+      {
+        role: 'user',
+        content:
+          config.customInstructions ||
+          'Generate a concise git commit message based on the above instructions and diff.',
+      },
+    ],
 
     providerOptions: {
       openai: {

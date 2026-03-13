@@ -1,5 +1,4 @@
 import chalk from 'chalk'
-import prettyMilliseconds from 'pretty-ms'
 import {
   commitChanges,
   ensureInsideGitRepo,
@@ -69,7 +68,6 @@ export async function mainController() {
     }
 
     while (true) {
-      const startedAt = Date.now()
       const llmResult = await runWithLoading('Generating commit message', () =>
         generateCommitMessage(repoRoot, config, { ...model, key: apiKey })
       )
@@ -79,21 +77,11 @@ export async function mainController() {
         throw new Error('The selected model returned an empty commit message.')
       }
 
-      console.log(
-        chalk.magenta('󱙺 Generated message'),
-        chalk.reset.dim(
-          `(${prettyMilliseconds(Date.now() - startedAt, {
-            secondsDecimalDigits: 1,
-            millisecondsDecimalDigits: 0,
-          })})`
-        )
-      )
-
-      console.log(chalk.white(finalCommitMessage))
+      console.log(chalk.reset.dim(finalCommitMessage))
 
       if (config.autoAcceptCommitMessage) {
         console.log('')
-        console.log(chalk.green.dim(` Committing with generated message`))
+        console.log(chalk.yellow.dim(' Committing staged changes'))
         break
       }
 
@@ -112,7 +100,7 @@ export async function mainController() {
   console.log('')
 
   if (config.autoRunPostCommand) {
-    console.log(chalk.green.dim(` Executing: ${config.postCommand}`))
+    console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
     if (!shouldRunPostCommand) {
