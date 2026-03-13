@@ -68,7 +68,12 @@ export async function promptForCommitMessageInput(model?: {
       ...selectionTheme,
       style: {
         ...selectionTheme.style,
-        answer: (input: string) => chalk.magenta.dim(input),
+        message: (txt: string, status: 'idle' | 'done') =>
+          status === 'idle'
+            ? `${selectionTheme.style.message(txt, status)}\n`
+            : selectionTheme.style.message(txt, status),
+        answer: (input: string) =>
+          input.length === 0 ? '' : chalk.magenta.dim(`\n${input}`),
       },
     },
   })
