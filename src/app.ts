@@ -24,8 +24,8 @@ const configSetProgram = configProgram.create('set', {
   ],
 
   globalFlags: {
-    local: NoArg.boolean().default(false).aliases('l'),
-    global: NoArg.boolean().default(true).aliases('g'),
+    local: NoArg.boolean().aliases('l'),
+    global: NoArg.boolean().aliases('g'),
   },
 })
 

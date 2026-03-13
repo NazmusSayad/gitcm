@@ -4,7 +4,6 @@ import chalk from 'chalk'
 type SelectedModel = {
   provider: string
   name: string
-  reasoning?: boolean | string
 }
 
 const selectionTheme = {
@@ -19,35 +18,7 @@ const selectionTheme = {
   },
 }
 
-export async function promptForFilesToStage(branch: string, files: string[]) {
-  console.log(`${chalk.cyan(' Branch')} ${chalk.white(branch)}\n`)
-
-  return checkbox({
-    message: `Select files to stage ${chalk.gray('(Enter = all)')}`,
-    choices: files.map((file) => ({
-      name: file,
-      value: file,
-    })),
-
-    pageSize: 12,
-    theme: selectionTheme,
-  })
-}
-
-export async function promptForCommitMessageInput(model: SelectedModel) {
-  const message = await input({
-    message: `${'Commit message'} ${chalk.gray(`(Enter=submit • model: ${model.provider}:${model.name})`)}`,
-    theme: selectionTheme,
-  })
-
-  return {
-    message: message.trim(),
-  }
-}
-
-export async function promptForGeneratedCommitAction(message: string) {
-  console.log(`${chalk.magenta('󰚩 Generated message')} ${chalk.white(message)}`)
-
+export async function promptForGeneratedCommitAction() {
   function mapResponse(value: string) {
     const normalized = value.trim().toLowerCase()
 
@@ -72,6 +43,27 @@ export async function promptForGeneratedCommitAction(message: string) {
       theme: selectionTheme,
     })
   )
+}
+
+export async function promptForFilesToStage(files: string[]) {
+  return checkbox({
+    message: `Select files to stage ${chalk.gray('(Enter = all)')}`,
+    choices: files.map((file) => ({
+      name: file,
+      value: file,
+    })),
+    pageSize: 12,
+    theme: selectionTheme,
+  })
+}
+
+export async function promptForCommitMessageInput(model: SelectedModel) {
+  const message = await input({
+    message: `Commit message ${chalk.gray(`(Enter=submit • model: ${model.provider}:${model.name})`)}`,
+    theme: selectionTheme,
+  })
+
+  return message.trim()
 }
 
 export async function promptForPostCommand(commandLabel: string) {

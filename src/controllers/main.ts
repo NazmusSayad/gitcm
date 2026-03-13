@@ -1,3 +1,4 @@
+import chalk from 'chalk'
 import {
   commitChanges,
   ensureInsideGitRepo,
@@ -37,7 +38,9 @@ export async function mainController() {
     return
   }
 
-  const selectedFiles = await promptForFilesToStage(branch, files)
+  console.log(`${chalk.cyan(' Branch')} ${chalk.white(branch)}\n`)
+
+  const selectedFiles = await promptForFilesToStage(files)
   const filesToStage = selectedFiles.length > 0 ? selectedFiles : files
   console.log('')
 
@@ -51,26 +54,29 @@ export async function mainController() {
       }
     : await promptForModelConfig()
 
-  const commitMessageInput = await promptForCommitMessageInput(selectedModel)
+  let finalCommitMessage = await promptForCommitMessageInput(selectedModel)
 
-  let commitMessage = commitMessageInput.message
-
-  if (commitMessage.length === 0) {
+  if (finalCommitMessage.length === 0) {
     console.log('')
 
     while (true) {
-      commitMessage = (await generateCommitMessage(cwd, config, selectedModel))
-        .text
+      finalCommitMessage = (
+        await generateCommitMessage(cwd, config, selectedModel)
+      ).text
 
-      if (commitMessage.length === 0) {
+      if (finalCommitMessage.length === 0) {
         throw new Error('The selected model returned an empty commit message.')
       }
+
+      console.log(
+        `${chalk.magenta('󰚩 Generated message')} ${chalk.white(finalCommitMessage)}`
+      )
 
       if (config.autoAcceptCommitMessage) {
         break
       }
 
-      const action = await promptForGeneratedCommitAction(commitMessage)
+      const action = await promptForGeneratedCommitAction()
 
       if (action === 'accept') {
         break
@@ -83,7 +89,7 @@ export async function mainController() {
     }
   }
 
-  await commitChanges(commitMessage, cwd)
+  await commitChanges(finalCommitMessage, cwd)
   console.log('')
 
   const shouldRunPostCommand =
