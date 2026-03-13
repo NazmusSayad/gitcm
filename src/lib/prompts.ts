@@ -1,5 +1,6 @@
 import { checkbox, confirm, input, password, select } from '@inquirer/prompts'
 import chalk from 'chalk'
+import { customInput } from './custom-input'
 
 const selectionTheme = {
   prefix: {
@@ -62,21 +63,9 @@ export async function promptForCommitMessageInput(model?: {
   hasKey: boolean
   name: string
 }) {
-  const message = await input({
+  const message = await customInput({
     required: !model?.hasKey,
     message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.name}` : ''})`)}`,
-
-    transformer: (value) => {
-      return value.length === 0 ? '' : chalk.magenta.dim(`\n${value}`)
-    },
-
-    theme: {
-      ...selectionTheme,
-      style: {
-        ...selectionTheme.style,
-        answer: () => '',
-      },
-    },
   })
 
   return message.trim()
