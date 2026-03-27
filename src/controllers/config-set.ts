@@ -13,6 +13,7 @@ export async function setConfigController(
   const key = keyArgument?.trim()
   const rawValue = valueArgument?.trim()
   const target = scope
+  const normalizedKey = key === 'customInstructions' ? 'instructions' : key
 
   if (!key) {
     throw new Error('Usage: config set <key> <value>')
@@ -23,13 +24,14 @@ export async function setConfigController(
   }
 
   if (
-    key !== 'autoAcceptCommitMessage' &&
-    key !== 'autoRunPostCommand' &&
-    key !== 'postCommand' &&
-    key !== 'customInstructions'
+    normalizedKey !== 'autoAcceptCommitMessage' &&
+    normalizedKey !== 'autoRunPostCommand' &&
+    normalizedKey !== 'postCommand' &&
+    normalizedKey !== 'pullRequestBaseBranch' &&
+    normalizedKey !== 'instructions'
   ) {
     throw new Error(
-      `Unsupported key '${key}'. Use autoAcceptCommitMessage, autoRunPostCommand, postCommand, customInstructions, or model.`
+      `Unsupported key '${key}'. Use autoAcceptCommitMessage, autoRunPostCommand, postCommand, pullRequestBaseBranch, instructions, or model.`
     )
   }
 
@@ -44,25 +46,39 @@ export async function setConfigController(
       ? ((await readProjectConfig(process.cwd())) ?? {})
       : ((await readGlobalConfig()) ?? {})
 
-  if (key === 'autoAcceptCommitMessage') {
+  if (normalizedKey === 'autoAcceptCommitMessage') {
     config.autoAcceptMessage = parseBoolean(rawValue)
   }
 
-  if (key === 'autoRunPostCommand') {
+  if (normalizedKey === 'autoRunPostCommand') {
     config.autoRunPostCommand = parseBoolean(rawValue)
   }
 
-  if (key === 'postCommand') {
-    if (rawValue !== 'push' && rawValue !== 'push-and-pull') {
-      throw new Error("Invalid postCommand. Use 'push' or 'push-and-pull'.")
+  if (normalizedKey === 'postCommand') {
+    if (
+      rawValue !== 'push' &&
+      rawValue !== 'push-and-pull' &&
+      rawValue !== 'push-and-pr'
+    ) {
+      throw new Error(
+        "Invalid postCommand. Use 'push', 'push-and-pull', or 'push-and-pr'."
+      )
     }
 
     config.postCommand = rawValue
   }
 
-  if (key === 'customInstructions') {
+  if (normalizedKey === 'pullRequestBaseBranch') {
     if (rawValue.length === 0) {
-      throw new Error('customInstructions cannot be empty.')
+      throw new Error('pullRequestBaseBranch cannot be empty.')
+    }
+
+    config.pullRequestBaseBranch = rawValue
+  }
+
+  if (normalizedKey === 'instructions') {
+    if (rawValue.length === 0) {
+      throw new Error('instructions cannot be empty.')
     }
 
     config.instructions = rawValue
@@ -74,7 +90,7 @@ export async function setConfigController(
     await writeGlobalConfig(config)
   }
 
-  console.log(`Updated ${key} in ${target} config.`)
+  console.log(`Updated ${normalizedKey} in ${target} config.`)
 }
 
 function parseBoolean(value: string) {

@@ -23,6 +23,7 @@ type MainControllerOptions = {
   generate?: boolean
   message?: string
   post?: boolean
+  pr?: string
   stage?: boolean
   yolo?: boolean
 }
@@ -33,10 +34,16 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   const repoRoot = await getRepositoryRoot(cwd)
   const config = await loadConfig(repoRoot)
+  const requestedPullRequestBaseBranch = options.pr?.trim()
 
   const forceStageEnabled = options.stage || options.yolo
   const forceLLMGenerate = options.generate || options.yolo
-  const forceExecPostCommand = options.post || options.yolo
+  const forceExecPostCommand =
+    options.post || options.yolo || Boolean(requestedPullRequestBaseBranch)
+
+  if (typeof options.pr === 'string' && !requestedPullRequestBaseBranch) {
+    throw new Error('The pull request base branch cannot be empty.')
+  }
 
   let finalCommitMessage = options.message?.trim() ?? ''
   if (typeof options.message === 'string' && finalCommitMessage.length === 0) {
@@ -132,18 +139,35 @@ export async function mainController(options: MainControllerOptions = {}) {
   await commitChanges(finalCommitMessage, repoRoot)
   console.log('')
 
-  if (!config.postCommand) {
+  const postCommand = requestedPullRequestBaseBranch
+    ? 'push-and-pr'
+    : config.postCommand
+
+  if (!postCommand) {
     return
   }
 
+  const pullRequestBaseBranch = requestedPullRequestBaseBranch
+    ? requestedPullRequestBaseBranch
+    : postCommand === 'push-and-pr'
+      ? config.pullRequestBaseBranch
+      : undefined
+
+  const postCommandLabel =
+    postCommand === 'push-and-pr' && pullRequestBaseBranch
+      ? `${postCommand} (${pullRequestBaseBranch})`
+      : postCommand
+
   if (forceExecPostCommand || config.autoRunPostCommand) {
-    console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
+    console.log(chalk.yellow.dim(` Executing: ${postCommandLabel}`))
   } else {
-    const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
+    const shouldRunPostCommand = await promptForPostCommand(postCommandLabel)
     if (!shouldRunPostCommand) {
       return
     }
   }
 
-  await runPostCommand(config.postCommand, repoRoot)
+  await runPostCommand(postCommand, repoRoot, {
+    pullRequestBaseBranch,
+  })
 }
