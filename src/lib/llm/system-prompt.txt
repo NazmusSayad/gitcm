@@ -17,6 +17,7 @@ STRICT RULES:
 8. MUST NOT use vague terms like "Update", "Fix stuff", "Changes"
 9. If including a body, MUST have exactly one blank line between subject and body
 10. Body lines MUST wrap at 72 characters
+11. If the provided context is not enough, inspect the repository with tools before answering
 
 OUTPUT INSTRUCTION:
 Return ONLY the commit message. No explanations, no extra text, no markdown formatting.

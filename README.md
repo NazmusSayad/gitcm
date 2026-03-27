@@ -1,6 +1,6 @@
 # gityo
 
-`gityo` is a CLI that helps you stage changes, write or generate a commit message, commit, and optionally run a post-commit git action.
+`gityo` is a CLI that helps you stage changes, write or generate a commit message, commit, and optionally push or open a pull request.
 
 It is built for people who want a faster commit flow without turning git into a wall of commands.
 
@@ -21,8 +21,9 @@ npx gityo
 - lets you choose which changed files to stage
 - lets you write your own commit message
 - can generate a commit message with AI
+- can inspect files, staged diffs, GitHub issues, and docs while generating
 - creates the commit for you
-- can run a post-commit action like `git push`
+- can run a post-commit action like `git push` or `gh pr create`
 
 ## Quick use
 
@@ -46,6 +47,7 @@ gityo
 gityo --stage
 gityo --generate
 gityo --message "fix login redirect bug"
+gityo --pr main
 gityo --yolo
 ```
 
@@ -64,6 +66,8 @@ gityo --generate
 ```
 
 Supported providers include OpenAI, Anthropic, Google, OpenRouter, and compatible custom endpoints.
+
+When the staged diff is too large to send directly, gityo sends a compact diff summary first and lets the model inspect specific files, staged diffs, GitHub issues, and linked documentation with tools.
 
 ## Config
 
@@ -112,6 +116,7 @@ Example:
   },
   "autoAcceptMessage": false,
   "postCommand": "push",
+  "pullRequestBaseBranch": "main",
   "autoRunPostCommand": false,
   "instructions": "Write short, clear commit messages."
 }
@@ -135,8 +140,16 @@ A few useful examples:
 
 ```bash
 gityo config set postCommand push
+gityo config set postCommand push-and-pr
+gityo config set pullRequestBaseBranch main
 gityo config set autoRunPostCommand true
 gityo config set autoAcceptCommitMessage true
+```
+
+To create a pull request right after commit without changing config:
+
+```bash
+gityo --pr main
 ```
 
 ## Good for

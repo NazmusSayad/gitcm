@@ -8,7 +8,7 @@ import { handleError } from './lib/handle-error'
 
 export const app = NoArg.create('gityo', {
   description:
-    'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.',
+    'Stage changes, generate or enter a commit message, create a commit, and optionally push or open a pull request.',
 
   flags: {
     stage: NoArg.boolean()
@@ -26,6 +26,10 @@ export const app = NoArg.create('gityo', {
     post: NoArg.boolean()
       .aliases('p')
       .description('Run the post-commit git command without asking.'),
+
+    pr: NoArg.string().description(
+      'Create a pull request to the provided base branch after commit.'
+    ),
 
     yolo: NoArg.boolean()
       .aliases('y')

@@ -75,8 +75,49 @@ export async function stageFiles(files: string[], cwd = process.cwd()) {
   await runGit(['add', '--', ...files], cwd)
 }
 
-export async function getStagedDiff(cwd = process.cwd()) {
-  return (await runGit(['diff', '--cached', '--no-ext-diff'], cwd)).stdout
+export async function getStagedDiff(
+  cwd = process.cwd(),
+  options: {
+    files?: string[]
+    unified?: number
+  } = {}
+) {
+  const args = ['diff', '--cached', '--no-ext-diff', '--no-color']
+
+  if (typeof options.unified === 'number') {
+    args.push(`--unified=${Math.max(0, options.unified)}`)
+  }
+
+  if (options.files && options.files.length > 0) {
+    args.push('--', ...options.files)
+  }
+
+  return (await runGit(args, cwd)).stdout
+}
+
+export async function getStagedNameStatus(cwd = process.cwd()) {
+  return (
+    await runGit(
+      ['diff', '--cached', '--name-status', '--find-renames', '--no-ext-diff'],
+      cwd
+    )
+  ).stdout
+}
+
+export async function getStagedDiffStat(cwd = process.cwd()) {
+  return (
+    await runGit(
+      [
+        'diff',
+        '--cached',
+        '--stat',
+        '--summary',
+        '--find-renames',
+        '--no-ext-diff',
+      ],
+      cwd
+    )
+  ).stdout
 }
 
 export async function commitChanges(message: string, cwd = process.cwd()) {
@@ -88,19 +129,115 @@ export async function commitChanges(message: string, cwd = process.cwd()) {
 
 export async function runPostCommand(
   postCommand: ResolvedConfig['postCommand'],
-  cwd = process.cwd()
+  cwd = process.cwd(),
+  options: {
+    pullRequestBaseBranch?: string
+  } = {}
 ) {
-  await execa('git', ['push'], {
-    cwd,
-    stdio: 'inherit',
-  })
+  await pushCurrentBranch(cwd)
 
   if (postCommand === 'push-and-pull') {
     await execa('git', ['pull', '--rebase'], {
       cwd,
       stdio: 'inherit',
     })
+
+    return
   }
+
+  if (postCommand === 'push-and-pr') {
+    const baseBranch = options.pullRequestBaseBranch?.trim()
+
+    if (!baseBranch) {
+      throw new Error(
+        'A pull request base branch is required. Use --pr <branch> or set pullRequestBaseBranch in config.'
+      )
+    }
+
+    await createPullRequest(baseBranch, cwd)
+  }
+}
+
+export async function pushCurrentBranch(cwd = process.cwd()) {
+  const hasUpstream = await currentBranchHasUpstream(cwd)
+
+  if (hasUpstream) {
+    await execa('git', ['push'], {
+      cwd,
+      stdio: 'inherit',
+    })
+
+    return
+  }
+
+  const remote = await getDefaultRemote(cwd)
+  if (!remote) {
+    throw new Error('No git remote found to push the current branch.')
+  }
+
+  await execa('git', ['push', '--set-upstream', remote, 'HEAD'], {
+    cwd,
+    stdio: 'inherit',
+  })
+}
+
+export async function createPullRequest(
+  baseBranch: string,
+  cwd = process.cwd()
+) {
+  await execa('gh', ['pr', 'create', '--base', baseBranch, '--fill'], {
+    cwd,
+    stdio: 'inherit',
+  })
+}
+
+async function currentBranchHasUpstream(cwd: string) {
+  const result = await execa(
+    'git',
+    ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{upstream}'],
+    {
+      cwd,
+      reject: false,
+    }
+  )
+
+  return result.exitCode === 0
+}
+
+async function getDefaultRemote(cwd: string) {
+  const configuredRemote = await getConfiguredBranchRemote(cwd)
+  if (configuredRemote) {
+    return configuredRemote
+  }
+
+  const remotes = (await runGit(['remote'], cwd)).stdout
+    .split('\n')
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  if (remotes.includes('origin')) {
+    return 'origin'
+  }
+
+  return remotes[0]
+}
+
+async function getConfiguredBranchRemote(cwd: string) {
+  const branch = await getCurrentBranch(cwd)
+  if (branch === '(detached HEAD)') {
+    return undefined
+  }
+
+  const result = await execa(
+    'git',
+    ['config', '--get', `branch.${branch}.remote`],
+    {
+      cwd,
+      reject: false,
+    }
+  )
+
+  return result.exitCode === 0 ? result.stdout.trim() || undefined : undefined
 }
 
 async function runGit(args: string[], cwd: string) {

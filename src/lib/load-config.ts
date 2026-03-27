@@ -16,7 +16,7 @@ export async function loadConfig(cwd = process.cwd()) {
   return resolveConfig({
     ...(globalConfig ?? {}),
     ...(projectConfig ?? {}),
-    customInstructions:
+    instructions:
       projectInstructions ??
       projectConfig?.instructions ??
       globalConfig?.instructions,

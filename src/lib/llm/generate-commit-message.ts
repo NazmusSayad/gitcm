@@ -1,7 +1,8 @@
 import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible'
-import { generateText } from 'ai'
+import { generateText, stepCountIs } from 'ai'
 import { SUPPORTED_PROVIDERS, type ResolvedConfig } from '../../schema'
-import { getStagedDiff } from '../git'
+import { buildCommitMessageContext } from './build-commit-message-context'
+import { createCommitMessageTools } from './create-commit-message-tools'
 import { resolveAiProvider } from './resolve-provider'
 import systemPrompt from './system-prompt.txt?raw'
 
@@ -23,8 +24,11 @@ export async function generateCommitMessage(
     )
   }
 
+  const stagedContext = await buildCommitMessageContext(cwd)
+
   const result = await generateText({
     model: provider(model.name),
+    stopWhen: stepCountIs(6),
 
     messages: [
       {
@@ -33,15 +37,14 @@ export async function generateCommitMessage(
       },
       {
         role: 'user',
-        content: `Staged diff:\n${await getStagedDiff(cwd)}`,
-      },
-      {
-        role: 'user',
-        content:
+        content: `Generate a concise git commit message for the currently staged changes.\n\n${stagedContext}\n\nAdditional instructions:\n${
           config.instructions ||
-          'Generate a concise git commit message based on the above instructions and diff.',
+          'Generate a concise git commit message based on the staged changes.'
+        }\n\nUse the available tools when you need more detail about specific files, diffs, GitHub issues, or linked documentation.`,
       },
     ],
+
+    tools: createCommitMessageTools(cwd),
 
     providerOptions: {
       openai: {

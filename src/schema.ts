@@ -6,6 +6,8 @@ export const SUPPORTED_PROVIDERS = [
   ...BUILTIN_PROVIDERS,
   ...COMPATIBLE_PROVIDERS,
 ] as const
+export const POST_COMMANDS = ['push', 'push-and-pull', 'push-and-pr'] as const
+export type PostCommand = (typeof POST_COMMANDS)[number] | null
 
 export const configSchema = z
   .object({
@@ -25,13 +27,16 @@ export const configSchema = z
     autoAcceptMessage: z.boolean(),
     instructions: z.string().min(1),
 
-    postCommand: z.enum(['push', 'push-and-pull']).nullable(),
+    postCommand: z.enum(POST_COMMANDS).nullable(),
+    pullRequestBaseBranch: z.string().min(1),
     autoRunPostCommand: z.boolean(),
   })
   .partial()
 
 export function resolveConfig(input: unknown) {
   const parsed = configSchema.parse(input)
+  const postCommand: PostCommand =
+    parsed.postCommand === undefined ? 'push' : parsed.postCommand
 
   return {
     model: parsed.model,
@@ -39,8 +44,9 @@ export function resolveConfig(input: unknown) {
     instructions: parsed.instructions,
     autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,
 
-    postCommand:
-      parsed.postCommand === undefined ? ('push' as const) : parsed.postCommand,
+    postCommand,
+
+    pullRequestBaseBranch: parsed.pullRequestBaseBranch,
 
     autoRunPostCommand: parsed.autoRunPostCommand ?? false,
   }
